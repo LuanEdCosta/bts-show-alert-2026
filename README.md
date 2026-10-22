@@ -27,5 +27,5 @@ https://luanedcosta.github.io/bts-show-alert-2026/iphone/
 4. Copie o "Link para abrir no Safari". Esse link traz a chave no final (`#k=...`) e não deve ser publicado.
 5. No iPhone, abra esse link no Safari.
 6. Toque em Compartilhar, depois em Adicionar à Tela de Início, e deixe "Abrir como App Web" ligado.
-7. Abra o ícone novo, toque em "Ativar avisos" e copie a inscrição.
+7. Feche a aba do Safari e abra o ícone novo. O botão "Ativar avisos" continua bloqueado no Safari; ele só libera dentro desse ícone. Toque nele e copie a inscrição. Se o ícone abrir sem a chave, apague-o e adicione de novo a partir do link.
 8. Cole a inscrição na extensão, salve e toque em "Enviar teste". O banner deve chegar no iPhone.

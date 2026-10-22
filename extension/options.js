@@ -55,6 +55,7 @@ function refreshLink() {
   }
   try {
     const url = new URL(base);
+    url.searchParams.set("k", key);
     url.hash = `k=${key}`;
     iphoneLink.value = url.toString();
   } catch {

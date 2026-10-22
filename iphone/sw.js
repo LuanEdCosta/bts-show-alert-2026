@@ -6,6 +6,31 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (!url.pathname.endsWith("/manifest.webmanifest")) return;
+  const key = url.searchParams.get("k");
+  if (!/^[A-Za-z0-9_-]{40,}$/.test(key || "")) return;
+  event.respondWith(new Response(JSON.stringify({
+    name: "BTS Alerta",
+    short_name: "BTS Alerta",
+    id: "./",
+    start_url: `./?k=${key}`,
+    scope: "./",
+    display: "standalone",
+    background_color: "#0e1116",
+    theme_color: "#024ddf",
+    icons: [{
+      src: "icon-192.png",
+      sizes: "192x192",
+      type: "image/png",
+      purpose: "any",
+    }],
+  }), {
+    headers: { "Content-Type": "application/manifest+json" },
+  }));
+});
+
 self.addEventListener("push", (event) => {
   const fallback = {
     title: "BTS Show Alert",

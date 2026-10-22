@@ -32,7 +32,7 @@
         <li>No Safari, toque em Compartilhar.</li>
         <li>Toque em Adicionar à Tela de Início.</li>
         <li>Deixe “Abrir como App Web” ligado.</li>
-        <li>Abra o ícone novo e toque em Ativar avisos.</li>
+        <li>Abra o ícone novo. Nesta aba do Safari o botão continua bloqueado.</li>
       </ol>
       <button id="enable" type="button">Ativar avisos</button>
       <textarea id="subscription" readonly hidden></textarea>
@@ -42,40 +42,40 @@
       const steps = document.querySelector("#steps");
       const button = document.querySelector("#enable");
       const output = document.querySelector("#subscription");
-      const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-      const publicKey = new URLSearchParams(location.hash.slice(1)).get("k");
+      const publicKey = loadKey();
+      const standalone = navigator.standalone === true
+        || window.matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches;
+      const canNotify = "Notification" in window && ("PushManager" in window || "pushManager" in window);
+      const iosSafari = "standalone" in navigator && navigator.standalone === false && !("Notification" in window);
 
       if (location.protocol !== "https:") {
-        status.textContent = "Publique esta pasta num endereço https e abra esse endereço no iPhone.";
-        status.className = "warn";
-        button.disabled = true;
-      } else if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        status.textContent = "Abra esta página pelo ícone da Tela de Início. O Safari comum não recebe o aviso.";
-        status.className = "warn";
-        button.disabled = true;
+        block("Publique esta pasta num endereço https e abra esse endereço no iPhone.");
       } else if (!publicKey) {
-        status.textContent = "Abra o link gerado pela extensão, com a chave no final do endereço.";
-        status.className = "warn";
-        button.disabled = true;
-      } else if (!standalone) {
-        status.textContent = "Falta adicionar esta página à Tela de Início e abrir por aquele ícone.";
-        status.className = "warn";
+        block("Abra o link gerado pela extensão. Se o ícone já está na Tela de Início, apague-o, abra esse link no Safari e adicione outra vez.");
+      } else if (iosSafari || !canNotify) {
+        block(standalone
+          ? "Atualize o iPhone para o iOS 16.4 ou mais novo e abra pelo ícone da Tela de Início."
+          : "Nesta aba do Safari o botão fica bloqueado. Abra o ícone BTS Alerta na Tela de Início. Se ele abrir o Safari de novo, apague o ícone e adicione outra vez com “Abrir como App Web” ligado.");
       } else {
         status.textContent = "Toque em Ativar avisos e aceite o pedido do iPhone.";
         steps.hidden = true;
+        button.disabled = false;
       }
 
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("./sw.js");
-      }
+      const ready = "serviceWorker" in navigator
+        ? navigator.serviceWorker.register("./sw.js").then(() => navigator.serviceWorker.ready)
+        : Promise.resolve(null);
+      ready.then(() => pointManifest(publicKey)).catch(() => {});
 
       button.addEventListener("click", async () => {
         button.disabled = true;
         try {
           const permission = await Notification.requestPermission();
           if (permission !== "granted") throw new Error("O iPhone não autorizou os avisos");
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.subscribe({
+          const registration = await ready;
+          const pushManager = registration?.pushManager || window.pushManager;
+          if (!pushManager) throw new Error("Abra esta página pelo ícone da Tela de Início.");
+          const subscription = await pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: b64urlToBytes(publicKey),
           });
@@ -90,6 +90,50 @@
           button.disabled = false;
         }
       });
+
+      function block(message) {
+        status.textContent = message;
+        status.className = "warn";
+        button.disabled = true;
+      }
+
+      function loadKey() {
+        const fromUrl = new URLSearchParams(location.search).get("k")
+          || new URLSearchParams(location.hash.slice(1)).get("k")
+          || "";
+        if (isKey(fromUrl)) {
+          // O ícone abre pelo start_url e perde a chave. O Safari copia este cookie ao adicionar à Tela de Início.
+          const secure = location.protocol === "https:" ? "; Secure" : "";
+          document.cookie = `bts_vapid=${fromUrl}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+          const url = new URL(location.href);
+          if (url.searchParams.get("k") !== fromUrl) {
+            url.searchParams.set("k", fromUrl);
+            history.replaceState(null, "", url);
+          }
+          return fromUrl;
+        }
+        const saved = document.cookie.match(/(?:^|; )bts_vapid=([^;]*)/);
+        const fromCookie = saved ? decodeURIComponent(saved[1]) : "";
+        return isKey(fromCookie) ? fromCookie : "";
+      }
+
+      function isKey(value) {
+        return /^[A-Za-z0-9_-]{40,}$/.test(value);
+      }
+
+      async function pointManifest(key) {
+        if (!isKey(key) || !("serviceWorker" in navigator)) return;
+        if (!navigator.serviceWorker.controller) {
+          await new Promise((resolve) => {
+            const finish = () => resolve();
+            navigator.serviceWorker.addEventListener("controllerchange", finish, { once: true });
+            setTimeout(finish, 4000);
+          });
+        }
+        if (!navigator.serviceWorker.controller) return;
+        const link = document.querySelector('link[rel="manifest"]');
+        if (link) link.href = `manifest.webmanifest?k=${key}`;
+      }
 
       function b64urlToBytes(value) {
         const padded = value.replace(/-/g, "+").replace(/_/g, "/");
