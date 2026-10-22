@@ -12,13 +12,15 @@ chrome.notifications.onClicked.addListener(async (id) => {
   if (url) await chrome.tabs.create({ url });
 });
 
-chrome.runtime.onInstalled.addListener(async (details) => {
+chrome.runtime.onInstalled.addListener(async () => {
   await ensureKeys();
-  if (details.reason === "install" || details.reason === "update") {
-    const { intervalMinutes } = await chrome.storage.local.get("intervalMinutes");
-    if (intervalMinutes == null || intervalMinutes === 1) {
-      await chrome.storage.local.set({ intervalMinutes: 0.5 });
-    }
+  const { intervalMinutes, scheduleVersion } = await chrome.storage.local.get([
+    "intervalMinutes",
+    "scheduleVersion",
+  ]);
+  if (scheduleVersion !== 1) {
+    const next = intervalMinutes == null || intervalMinutes === 0.5 ? 1 : intervalMinutes;
+    await chrome.storage.local.set({ intervalMinutes: next, scheduleVersion: 1 });
   }
   stayAwake();
   await ensureAlarm();
@@ -65,8 +67,8 @@ function stayAwake() {
 }
 
 async function ensureAlarm() {
-  const { intervalMinutes = 0.5 } = await chrome.storage.local.get("intervalMinutes");
-  const safe = Math.max(0.5, Number(intervalMinutes) || 0.5);
+  const { intervalMinutes = 1 } = await chrome.storage.local.get("intervalMinutes");
+  const safe = Math.max(0.5, Number(intervalMinutes) || 1);
   const existing = await chrome.alarms.get(ALARM);
   if (!existing || existing.periodInMinutes !== safe) {
     await chrome.alarms.create(ALARM, { periodInMinutes: safe });
@@ -88,7 +90,7 @@ async function checkAll() {
   running = true;
   try {
     const stored = await chrome.storage.local.get(["states", "lastCheck", "intervalMinutes"]);
-    const intervalMinutes = Math.max(0.5, Number(stored.intervalMinutes) || 0.5);
+    const intervalMinutes = Math.max(0.5, Number(stored.intervalMinutes) || 1);
     const gapLimit = Math.max(5 * 60 * 1000, intervalMinutes * 3 * 60 * 1000);
     if (stored.lastCheck && Date.now() - stored.lastCheck > gapLimit) {
       const late = formatGap(Date.now() - stored.lastCheck);
