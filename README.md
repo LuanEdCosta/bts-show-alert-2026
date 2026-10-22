@@ -17,10 +17,15 @@ O aviso do iPhone é uma notificação do próprio sistema. A mensagem passa pel
 
 ## iPhone
 
-A pasta `iphone` precisa ficar num endereço https estável. Publique só essa pasta. Ela não contém a chave secreta.
+A página que o iPhone usa já está no GitHub Pages:
 
-1. Nas opções da extensão, informe seu e-mail e o endereço https da página.
-2. Abra o link gerado no Safari.
-3. Compartilhar → Adicionar à Tela de Início, com "Abrir como App Web" ligado.
-4. Abra o ícone, toque em "Ativar avisos" e cole a inscrição de volta na extensão.
-5. Envie o teste e confira o banner no iPhone.
+https://luanedcosta.github.io/bts-show-alert-2026/iphone/
+
+1. Abra as opções da extensão, em "Parear iPhone".
+2. Informe seu e-mail de contato.
+3. No campo "Endereço da página", cole o endereço acima, com a barra no final.
+4. Copie o "Link para abrir no Safari". Esse link traz a chave no final (`#k=...`) e não deve ser publicado.
+5. No iPhone, abra esse link no Safari.
+6. Toque em Compartilhar, depois em Adicionar à Tela de Início, e deixe "Abrir como App Web" ligado.
+7. Abra o ícone novo, toque em "Ativar avisos" e copie a inscrição.
+8. Cole a inscrição na extensão, salve e toque em "Enviar teste". O banner deve chegar no iPhone.
