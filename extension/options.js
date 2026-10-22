@@ -18,7 +18,7 @@ const vapid = stored.vapid?.publicKey ? stored.vapid : await generateFromPage();
 publicKey.value = vapid.publicKey;
 emailInput.value = (stored.subject || "").replace(/^mailto:/, "");
 pageUrl.value = stored.pageUrl || "";
-interval.value = String(stored.intervalMinutes || 1);
+interval.value = String(stored.intervalMinutes || 0.5);
 if (stored.subscription) subscriptionInput.value = JSON.stringify(stored.subscription, null, 2);
 refreshLink();
 

@@ -13,7 +13,7 @@ O aviso do iPhone é uma notificação do próprio sistema. A mensagem passa pel
 1. Abra `chrome://extensions`.
 2. Ative o modo do desenvolvedor.
 3. Escolha "Carregar sem compactação" e selecione a pasta `extension`.
-4. O Chrome passa a consultar as três páginas cerca de uma vez por minuto.
+4. O Chrome consulta as três páginas a cada 30 segundos e pede para o computador não dormir enquanto a extensão estiver carregada. Cada consulta lê, duas vezes, o estado oficial do evento: status da venda, show disponível, setores, fila e ofertas. Qualquer um desses sinais, ou uma mudança que não dê para classificar, avisa neste computador e no iPhone.
 
 ## iPhone
 

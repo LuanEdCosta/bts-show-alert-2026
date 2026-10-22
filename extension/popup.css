@@ -58,11 +58,19 @@ button:disabled {
 }
 
 article {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
   padding: 12px 0;
   border-top: 1px solid #243041;
+}
+
+.evidence {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #8ea0b8;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 article a {

@@ -1,5 +1,5 @@
 import { EVENTS } from "./events.js";
-import { statusLabel } from "./parse.js";
+import { evidenceLabel, statusLabel } from "./parse.js";
 
 const list = document.querySelector("#events");
 const updated = document.querySelector("#updated");
@@ -56,6 +56,13 @@ async function render() {
       status.append(detail);
     }
     article.append(link, status);
+    const evidence = evidenceLabel(state);
+    if (evidence) {
+      const line = document.createElement("p");
+      line.className = "evidence";
+      line.textContent = evidence;
+      article.append(line);
+    }
     list.append(article);
   }
 }
