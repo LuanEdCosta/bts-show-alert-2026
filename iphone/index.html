@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="BTS Alerta">
+    <meta name="theme-color" content="#024ddf">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <title>BTS Alerta</title>
+    <style>
+      :root { color-scheme: dark; font-family: "Segoe UI", sans-serif; background: #0e1116; color: #f4f7fb; }
+      body { margin: 0; }
+      main { max-width: 420px; margin: 0 auto; padding: 28px 20px 48px; }
+      h1 { font-size: 28px; margin: 0 0 8px; }
+      p, li { line-height: 1.5; color: #d5deea; }
+      button, textarea { font: inherit; }
+      button { width: 100%; border: 0; border-radius: 999px; background: #024ddf; color: white; padding: 14px 16px; }
+      button:disabled { opacity: 0.6; }
+      textarea { width: 100%; box-sizing: border-box; min-height: 180px; margin-top: 16px; background: #161c25; color: inherit; border: 1px solid #314158; border-radius: 12px; padding: 12px; }
+      .warn { color: #ffb020; }
+      .ok { color: #7dffa8; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>BTS Alerta</h1>
+      <p id="status">Preparando os avisos neste iPhone.</p>
+      <ol id="steps">
+        <li>No Safari, toque em Compartilhar.</li>
+        <li>Toque em Adicionar à Tela de Início.</li>
+        <li>Deixe “Abrir como App Web” ligado.</li>
+        <li>Abra o ícone novo e toque em Ativar avisos.</li>
+      </ol>
+      <button id="enable" type="button">Ativar avisos</button>
+      <textarea id="subscription" readonly hidden></textarea>
+    </main>
+    <script>
+      const status = document.querySelector("#status");
+      const steps = document.querySelector("#steps");
+      const button = document.querySelector("#enable");
+      const output = document.querySelector("#subscription");
+      const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+      const publicKey = new URLSearchParams(location.hash.slice(1)).get("k");
+
+      if (location.protocol !== "https:") {
+        status.textContent = "Publique esta pasta num endereço https e abra esse endereço no iPhone.";
+        status.className = "warn";
+        button.disabled = true;
+      } else if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        status.textContent = "Abra esta página pelo ícone da Tela de Início. O Safari comum não recebe o aviso.";
+        status.className = "warn";
+        button.disabled = true;
+      } else if (!publicKey) {
+        status.textContent = "Abra o link gerado pela extensão, com a chave no final do endereço.";
+        status.className = "warn";
+        button.disabled = true;
+      } else if (!standalone) {
+        status.textContent = "Falta adicionar esta página à Tela de Início e abrir por aquele ícone.";
+        status.className = "warn";
+      } else {
+        status.textContent = "Toque em Ativar avisos e aceite o pedido do iPhone.";
+        steps.hidden = true;
+      }
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js");
+      }
+
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") throw new Error("O iPhone não autorizou os avisos");
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: b64urlToBytes(publicKey),
+          });
+          output.hidden = false;
+          output.value = JSON.stringify(subscription);
+          status.textContent = "Copie a inscrição e cole na extensão.";
+          status.className = "ok";
+          await navigator.clipboard.writeText(output.value).catch(() => {});
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : String(error);
+          status.className = "warn";
+          button.disabled = false;
+        }
+      });
+
+      function b64urlToBytes(value) {
+        const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+        const pad = padded + "=".repeat((4 - (padded.length % 4)) % 4);
+        const binary = atob(pad);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+      }
+    </script>
+  </body>
+</html>

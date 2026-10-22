@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BTS Show Alert</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Extensão neste computador</p>
+      <h1>Avisar o iPhone</h1>
+      <p class="lead">
+        O Chrome consulta a Ticketmaster e mostra o aviso aqui. O iPhone recebe o mesmo aviso pelo sistema,
+        numa página sua adicionada à Tela de Início. A chave secreta fica neste navegador.
+      </p>
+
+      <section>
+        <h2>Consulta</h2>
+        <label>
+          Intervalo
+          <select id="interval">
+            <option value="0.5">30 segundos</option>
+            <option value="1" selected>1 minuto</option>
+            <option value="2">2 minutos</option>
+            <option value="5">5 minutos</option>
+          </select>
+        </label>
+        <p class="hint">O Chrome pode atrasar um pouco o alarme. Abaixo de 30 segundos ele não garante.</p>
+      </section>
+
+      <section>
+        <h2>1. Chave deste Chrome</h2>
+        <label>
+          E-mail de contato
+          <input id="email" type="email" autocomplete="email" placeholder="voce@email.com" required>
+        </label>
+        <p class="hint">A Apple exige um contato no identificador do aviso. Ele não aparece na notificação.</p>
+        <label>
+          Chave pública
+          <textarea id="public-key" rows="3" readonly></textarea>
+        </label>
+        <button id="regenerate" type="button">Gerar outra chave</button>
+      </section>
+
+      <section>
+        <h2>2. Página no iPhone</h2>
+        <p>
+          Publique a pasta <code>iphone</code> deste repositório num endereço https que não mude.
+          A página não guarda senha. O iPhone só aceita o aviso depois de abrir essa página pela Tela de Início.
+        </p>
+        <label>
+          Endereço da página
+          <input id="page-url" type="url" placeholder="https://seu-endereco/iphone/">
+        </label>
+        <label>
+          Link para abrir no Safari
+          <textarea id="iphone-link" rows="3" readonly></textarea>
+        </label>
+        <ol>
+          <li>Abra o link no Safari do iPhone.</li>
+          <li>Toque em Compartilhar, depois em Adicionar à Tela de Início.</li>
+          <li>Deixe “Abrir como App Web” ligado e confirme.</li>
+          <li>Abra o ícone novo, toque em Ativar avisos e copie a inscrição.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>3. Inscrição do iPhone</h2>
+        <label>
+          Cole a inscrição
+          <textarea id="subscription" rows="8" placeholder='{"endpoint":"https://web.push.apple.com/..." }'></textarea>
+        </label>
+        <div class="actions">
+          <button id="save" type="button">Salvar iPhone</button>
+          <button id="test" type="button">Enviar teste</button>
+        </div>
+        <p id="result" role="status"></p>
+      </section>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
