@@ -3,6 +3,8 @@ const publicKey = document.querySelector("#public-key");
 const pageUrl = document.querySelector("#page-url");
 const iphoneLink = document.querySelector("#iphone-link");
 const subscriptionInput = document.querySelector("#subscription");
+const relayUrlInput = document.querySelector("#relay-url");
+const relayKeyInput = document.querySelector("#relay-key");
 const interval = document.querySelector("#interval");
 const result = document.querySelector("#result");
 
@@ -12,6 +14,8 @@ const stored = await chrome.storage.local.get([
   "pageUrl",
   "subscription",
   "intervalMinutes",
+  "relayUrl",
+  "relayKey",
 ]);
 
 const vapid = stored.vapid?.publicKey ? stored.vapid : await generateFromPage();
@@ -19,6 +23,8 @@ publicKey.value = vapid.publicKey;
 emailInput.value = (stored.subject || "").replace(/^mailto:/, "");
 pageUrl.value = stored.pageUrl || "";
 interval.value = String(stored.intervalMinutes || 1);
+relayUrlInput.value = stored.relayUrl || "";
+relayKeyInput.value = stored.relayKey || "";
 if (stored.subscription) subscriptionInput.value = JSON.stringify(stored.subscription, null, 2);
 refreshLink();
 
@@ -45,6 +51,12 @@ document.querySelector("#regenerate").addEventListener("click", async () => {
 
 document.querySelector("#save").addEventListener("click", saveSubscription);
 document.querySelector("#test").addEventListener("click", sendTest);
+relayUrlInput.addEventListener("change", () => {
+  saveRelay().catch((error) => setResult(error instanceof Error ? error.message : String(error), false));
+});
+relayKeyInput.addEventListener("change", () => {
+  saveRelay().catch((error) => setResult(error instanceof Error ? error.message : String(error), false));
+});
 
 function refreshLink() {
   const key = publicKey.value.trim();
@@ -69,9 +81,27 @@ async function saveContact() {
   await chrome.storage.local.set({ subject: `mailto:${email}` });
 }
 
+async function saveRelay() {
+  const relayUrl = relayUrlInput.value.trim();
+  const relayKey = relayKeyInput.value;
+  if (relayUrl) {
+    const url = new URL(relayUrl);
+    const local = url.hostname === "127.0.0.1" || url.hostname === "localhost";
+    if (url.protocol !== "https:" && !local) {
+      throw new Error("No servidor, o encaminhador precisa de https");
+    }
+    if (!local) {
+      const granted = await chrome.permissions.request({ origins: [`${url.origin}/*`] });
+      if (!granted) throw new Error("O Chrome precisa de permissão para usar esse encaminhador");
+    }
+  }
+  await chrome.storage.local.set({ relayUrl, relayKey });
+}
+
 async function saveSubscription() {
   setResult("Salvando…", true);
   try {
+    await saveRelay();
     const email = emailInput.value.trim();
     if (!email) throw new Error("Informe o e-mail de contato");
     const subscription = JSON.parse(subscriptionInput.value);
@@ -94,6 +124,12 @@ async function saveSubscription() {
 
 async function sendTest() {
   setResult("Enviando teste…", true);
+  try {
+    await saveRelay();
+  } catch (error) {
+    setResult(error instanceof Error ? error.message : String(error), false);
+    return;
+  }
   const response = await chrome.runtime.sendMessage({ type: "test-push" });
   if (response?.ok) {
     setResult("A Apple aceitou o teste. Olhe o iPhone.", true);

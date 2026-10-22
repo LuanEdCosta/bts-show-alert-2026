@@ -1,11 +1,14 @@
 {
   "manifest_version": 3,
   "name": "BTS Show Alert",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Avisa quando a Ticketmaster liberar ingresso do BTS no MorumBIS.",
   "permissions": ["alarms", "notifications", "power", "storage"],
   "optional_host_permissions": ["https://*/*"],
-  "host_permissions": ["https://www.ticketmaster.com.br/*"],
+  "host_permissions": [
+    "https://www.ticketmaster.com.br/*",
+    "http://127.0.0.1:47321/*"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"

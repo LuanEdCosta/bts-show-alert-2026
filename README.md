@@ -28,4 +28,7 @@ https://luanedcosta.github.io/bts-show-alert-2026/iphone/
 5. No iPhone, abra esse link no Safari.
 6. Toque em Compartilhar, depois em Adicionar à Tela de Início, e deixe "Abrir como App Web" ligado.
 7. Feche a aba do Safari e abra o ícone novo. O botão "Ativar avisos" continua bloqueado no Safari; ele só libera dentro desse ícone. Toque nele e copie a inscrição. Se o ícone abrir sem a chave, apague-o e adicione de novo a partir do link.
-8. Cole a inscrição na extensão, salve e toque em "Enviar teste". O banner deve chegar no iPhone.
+8. No Windows, dê dois cliques em `start-relay.cmd`, na pasta do projeto, e deixe essa janela aberta. Se o Node não estiver instalado, o script baixa uma cópia só para este usuário, em `%LOCALAPPDATA%\bts-show-alert\node`, sem pedir administrador.
+9. Nas opções da extensão, deixe o endereço e a senha do encaminhador em branco. Cole a inscrição, salve e toque em "Enviar teste". O banner deve chegar no iPhone.
+
+O Chrome 153 recusa o certificado atual de `web.push.apple.com` (`ERR_CERT_AUTHORITY_INVALID`). O `start-relay.cmd` sobe um encaminhador local que ainda aceita essa cadeia. Ele escuta só em `127.0.0.1` e só encaminha para `*.push.apple.com`. O Chrome precisa continuar aberto para consultar a Ticketmaster. Feche a janela do encaminhador só quando não quiser mais o aviso no iPhone.

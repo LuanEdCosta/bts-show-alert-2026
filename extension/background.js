@@ -232,7 +232,14 @@ async function notifyDesktop(title, message, url) {
 }
 
 async function sendPush(payload) {
-  const stored = await chrome.storage.local.get(["subscription", "vapid", "subject", "jwtCache"]);
+  const stored = await chrome.storage.local.get([
+    "subscription",
+    "vapid",
+    "subject",
+    "jwtCache",
+    "relayUrl",
+    "relayKey",
+  ]);
   if (!stored.subscription) return { skipped: true };
   try {
     const result = await sendNotification({
@@ -240,6 +247,8 @@ async function sendPush(payload) {
       payload: JSON.stringify(payload),
       vapid: { ...stored.vapid, subject: stored.subject },
       jwtCache: stored.jwtCache,
+      relayUrl: stored.relayUrl,
+      relayKey: stored.relayKey,
     });
     await chrome.storage.local.set({
       jwtCache: result.jwtCache,

@@ -1,5 +1,10 @@
 const encoder = new TextEncoder();
 
+// Chrome 153+ rejects web.push.apple.com. The leaf SCT is 2026-10-06, after the
+// COMODO ECC root cutoff of 2026-09-30, so fetch fails with ERR_CERT_AUTHORITY_INVALID.
+// Node still trusts that chain until Mozilla drops it in 2027.
+const PUSH_RELAY = "http://127.0.0.1:47321/push";
+
 export function bytesToB64url(bytes) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -153,6 +158,8 @@ export async function sendNotification({
   urgency = "high",
   topic = "bts-show-alert",
   jwtCache = null,
+  relayUrl = "",
+  relayKey = "",
 }) {
   if (!subscription?.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
     throw new Error("Inscrição do iPhone incompleta");
@@ -183,18 +190,15 @@ export async function sendNotification({
   }
 
   const body = await encryptPayload(subscription.keys.p256dh, subscription.keys.auth, payload);
-  const response = await fetch(subscription.endpoint, {
-    method: "POST",
-    headers: {
-      TTL: String(ttl),
-      Urgency: urgency,
-      Topic: topic,
-      Authorization: `vapid t=${token}, k=${vapid.publicKey}`,
-      "Content-Encoding": "aes128gcm",
-      "Content-Type": "application/octet-stream",
-    },
-    body,
-  });
+  const headers = {
+    TTL: String(ttl),
+    Urgency: urgency,
+    Topic: topic,
+    Authorization: `vapid t=${token}, k=${vapid.publicKey}`,
+    "Content-Encoding": "aes128gcm",
+    "Content-Type": "application/octet-stream",
+  };
+  const response = await postToPushService(subscription.endpoint, headers, body, relayUrl, relayKey);
   const responseBody = await response.text();
   return {
     ok: response.ok,
@@ -208,4 +212,30 @@ export async function sendNotification({
       publicKey: vapid.publicKey,
     },
   };
+}
+
+async function postToPushService(endpoint, headers, body, relayUrl, relayKey) {
+  const relayHeaders = { ...headers, "X-Target-Url": endpoint };
+  if (relayKey) relayHeaders["X-Relay-Key"] = relayKey;
+  try {
+    return await fetch(relayUrl || PUSH_RELAY, {
+      method: "POST",
+      headers: relayHeaders,
+      body,
+      signal: AbortSignal.timeout(20000),
+    });
+  } catch {
+    try {
+      return await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body,
+        signal: AbortSignal.timeout(20000),
+      });
+    } catch {
+      throw new Error(
+        "O Chrome recusou o certificado da Apple. Confira o endereço do encaminhador ou deixe rodando: node relay/push-relay.mjs",
+      );
+    }
+  }
 }

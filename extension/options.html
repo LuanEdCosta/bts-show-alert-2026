@@ -71,6 +71,18 @@
           Cole a inscrição
           <textarea id="subscription" rows="8" placeholder='{"endpoint":"https://web.push.apple.com/..." }'></textarea>
         </label>
+        <label>
+          Endereço do encaminhador
+          <input id="relay-url" type="url" placeholder="http://127.0.0.1:47321/push" autocomplete="off">
+        </label>
+        <label>
+          Senha do encaminhador
+          <input id="relay-key" type="password" autocomplete="off">
+        </label>
+        <p class="hint">
+          Em branco, usa o encaminhador deste computador. Dê dois cliques em
+          <code>start-relay.cmd</code> e deixe a janela aberta.
+        </p>
         <div class="actions">
           <button id="save" type="button">Salvar iPhone</button>
           <button id="test" type="button">Enviar teste</button>
